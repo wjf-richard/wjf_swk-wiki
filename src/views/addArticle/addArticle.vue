@@ -103,7 +103,7 @@ export default {
       categoryId: '',
       articleForm: {
         attachments: [],
-        author: '小罗',
+        author: '太空漫步',
         content: {
           text: ''
         },
@@ -197,6 +197,8 @@ export default {
       this.articleForm.attachments.splice(index, 1)
     },
     submit () {
+      this.contentForm.text = this.$refs.md.d_value
+      this.contentForm.textHtml = this.$refs.md.d_render
       if (this.articleForm.content.text.length <= 0) {
         alert('正文内容不能为空，请填写正文内容')
       } else {

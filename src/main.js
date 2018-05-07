@@ -4,8 +4,8 @@ import Vue from 'vue'
 import BootstrapVue from 'bootstrap-vue'
 import App from './App'
 import router from './router' // 开发模式
-// import back from './router/back' // 打包后台
-// import front from './router/front' // 打包前台
+// import router from './router/back' // 打包后台
+// import router from './router/front' // 打包前台
 
 // element-ui
 import ElementUI from 'element-ui'
