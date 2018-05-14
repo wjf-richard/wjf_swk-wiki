@@ -4,18 +4,28 @@
       <b-col sm="12">
         <b-card>
           <div slot="header">
-            WIKI知识库列表
-            <router-link to="../addArticle">
-              <button type="button" class=" btn-primary">新建文章</button>
-            </router-link>
+            <span>WIKI知识库列表</span>
+            <div>
+              <el-select v-model="optionsSelected" @change="optionsChange(optionsSelected)" placeholder="按分类搜索">
+                <el-option
+                  v-for="item in options"
+                  :key="item.id"
+                  :label="item.name"
+                  :value="item.id">
+                </el-option>
+              </el-select>
+              <router-link to="../addArticle">
+                <el-button type="primary" class="">新建文章</el-button>
+              </router-link>
+            </div>
           </div>
           <el-table :data="list" border style="width: 100%">
-            <el-table-column label="分类" width="85">
+            <el-table-column label="分类" width="130">
               <template slot-scope="scope">
                 {{scope.row.category.name}}
               </template>
             </el-table-column>
-            <el-table-column label="标题">
+            <el-table-column label="标题" min-width="240">
               <template slot-scope="scope">
                 <router-link :to="{
                   path: '../articleDetail',
@@ -30,14 +40,14 @@
                 </router-link>
               </template>
             </el-table-column>
-            <el-table-column label="项目标签" width="240">
+            <el-table-column label="项目标签" width="170">
               <template slot-scope="scope">
                 <span class="el-tag el-tag--info el-tag--small item-box" v-for="(item,index) in scope.row.projectTags" :key="index">
                   <span>{{item.name}}</span>
                 </span>
               </template>
             </el-table-column>
-            <el-table-column label="关键词标签" width="240">
+            <el-table-column label="关键词标签" width="170">
               <template slot-scope="scope">
                 <span class="el-tag el-tag--info el-tag--small item-box" v-for="(item,index) in scope.row.keywordTags" :key="index">
                   <span>{{item.name}}</span>
@@ -88,14 +98,17 @@
 </template>
 
 <script>
-import { getAllArticleList, deteleArticle } from '@/api/articleList'
+import { getAllArticleList, deteleArticle, getArticleListById } from '@/api/articleList'
+import { getArticelClasses } from '@/api/category'
 export default {
   data () {
     return {
       currentPage: 1,
       total: 10,
       size: 10,
-      list: []
+      list: [],
+      options: [],
+      optionsSelected: ''
     }
   },
   created () {
@@ -108,9 +121,19 @@ export default {
         this.total = res.data.data.totalElements
         this.size = res.data.data.size
       })
+      getArticelClasses().then(res => {
+        this.options = res.data.data.content
+      })
+    },
+    optionsChange (id) {
+      getArticleListById(id, 1, 10).then(res => {
+        this.list = res.data.data.content
+        this.total = res.data.data.totalElements
+        this.size = res.data.data.size
+      })
     },
     handleDelete (index, row) {
-      console.log(row.id)
+      // console.log(row.id)
       this.$confirm(`确定删除 ${row.title} ？`, '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -155,10 +178,13 @@ export default {
   align-items: center;
 }
 .card-header div button {
-  cursor: pointer;
-  background: #2294e3;
   font-size: 0.675rem;
   padding: 0.35rem 0.75rem;
+  height: 40px;
+  border-radius: 4px;
+}
+.card-header div .el-select{
+  margin-right: 1rem;
 }
 .el-table .cell .item-box {
   margin: 2px 0 2px 6px;

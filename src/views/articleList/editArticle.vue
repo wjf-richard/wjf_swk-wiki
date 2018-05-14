@@ -22,7 +22,7 @@
                 </el-option>
               </el-select>
             </el-form-item>
-            <el-form-item label="关键词" prop="keywordTags">
+            <el-form-item label="关键词">
               <el-select v-model="articleForm.keywordTags" multiple default-first-option value-key="id" @change="keyWordChange" placeholder="请选择文章关键词">
                 <el-option v-for="item in keyWordsSelete" :key="item.id" :label="item.name" :value="item">
                 </el-option>
@@ -120,13 +120,10 @@ export default {
         ],
         subtitle: [
           { required: true, message: '文章短标题不能为空，请输入文章短标题', trigger: 'change' },
-          { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'change' }
+          { min: 3, message: '建议长度在 3 到 10 个中文字符左右', trigger: 'change' }
         ],
         category: [
           { required: true, message: '请选择文章分类', trigger: 'change' }
-        ],
-        keywordTags: [
-          { required: true, message: '至少选择一个文章关键词', trigger: 'change' }
         ]
       }
     }
@@ -214,7 +211,7 @@ export default {
                 let status = res.status
                 if (status === 200) {
                   alert('修改成功！')
-                  this.$router.push({path: 'articleList'})
+                  this.$router.push({path: 'editArticle'})
                 } else {
                   alert('服务器出错，修改失败')
                 }

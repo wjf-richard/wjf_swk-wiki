@@ -2,68 +2,110 @@
   <div class="sidebar">
     <nav class="sidebar-nav">
       <ul class="nav">
-        <template v-for="(item, index) in navItems" >
-          <template v-if="item.child.length > 0">
-            <li class="nav-item nav-dropdown" :class="{open:item.isOpen}"  disabled :key="index" >
-              <div class="nav-link nav-dropdown-toggle" @click="handleClick(index, navItems)">{{item.name}}</div>
-              <ul class="nav-dropdown-items">
-                <li class="nav-item" v-for="(tem, idx) in item.child" :key="idx">
-                  <div @click="subID(index, tem, navItems)">
-                    <span class="nav-link" :class="{on:tem.isActive}">
-                      {{tem.name}}
-                    </span>
-                  </div>
-                </li>
-              </ul>
+        <template v-for="(category, index) in categoryList" >
+          <template>
+            <li class="nav-item nav-dropdown" :class="{open:category.isOpen}"  disabled :key="index" >
+              <div class="nav-link nav-dropdown-toggle" @click="categoryOnClick(category.id, categoryList)">{{category.name}}</div>
+              <template if="this.articleList.categoryId === item.id">
+                <ul class="nav-dropdown-items">
+                  <li class="nav-item" v-for="(article, index) in articleList.data" :key="index">
+                    <div @click="getArticleContent(article)">
+                      <span class="nav-link nav-link-item fold" :class="{ on:article.isActive }">
+                        {{article.name}}
+                      </span>
+                    </div>
+                  </li>
+                </ul>
+              </template>
             </li>
           </template>
-          <template v-else>
-          <li class="nav-item" :key="index">
-            <div @click="subNull()">
-              <span class="nav-link">{{item.name}}</span>
-            </div>
-          </li>
-        </template>
         </template>
       </ul>
     </nav>
   </div>
 </template>
 <script>
+import { getDetailCategories, getDetailSubTitle } from '@/api/detail-api.js'
 export default {
   name: 'sidebar',
-  props: {
-    navItems: {
-      type: Array,
-      required: true,
-      default: () => []
+  data () {
+    return {
+      categoryList: [],
+      articleList: {
+        categoryId: '',
+        data: []
+      },
+      categoryId: ''
     }
   },
+  created () {
+    this.getCategoryList()
+    this.getArticleList(localStorage.getItem('categoryId'))
+  },
   methods: {
-    handleClick (index, navItems) {
-      if (navItems[index].isOpen === true) {
-        navItems[index].isOpen = false
-        return
-      }
-      for (let item of navItems) {
-        item.isOpen = false
-      }
-      navItems[index].isOpen = true
+    getCategoryList () {
+      let localStorageCategoryId = localStorage.getItem('categoryId')
+      getDetailCategories().then(res => {
+        let categoryMap = new Map(res.data.data.content.map((item, i) => [i, item]))
+        for (let [key, category] of categoryMap) {
+          let isOpen = false
+          if (parseInt(localStorageCategoryId) === parseInt(category.id)) {
+            isOpen = true
+          }
+          this.categoryList.push({
+            id: category.id,
+            name: category.name,
+            isOpen: isOpen,
+            key: key
+          })
+        }
+      })
     },
-    subID (index, item, navItems) {
-      for (let parentItem of navItems) {
-        parentItem.isOpen = false
-        navItems[index].isOpen = true
-        for (let childItem of parentItem.child) {
-          childItem.isActive = false
+    categoryOnClick (categoryId, categoryList) {
+      localStorage.setItem('categoryId', categoryId)
+      for (let category of categoryList) {
+        if (category.id === categoryId && category.isOpen === true) {
+          category.isOpen = false
+          return
+        }
+        if (category.id === categoryId) {
+          category.isOpen = true
+        } else {
+          category.isOpen = false
         }
       }
-      this.$emit('ievent', item)
-      item.isActive = true
+      this.clearArticleList()
+      this.getArticleList(categoryId)
     },
-    subNull () {
-      let noId = true
-      this.$emit('nochild', noId)
+    getArticleList (categoryId) {
+      let localStorageArticleId = localStorage.getItem('articleId')
+      getDetailSubTitle(categoryId).then(res => {
+        this.articleList.categoryId = categoryId
+        if (res.data.data && res.data.data.length > 0) {
+          this.$emit('isArticleListEmpty', false)
+          for (let article of res.data.data) {
+            let isActive = false
+            if (parseInt(localStorageArticleId) === parseInt(article.id)) {
+              isActive = true
+            }
+            this.articleList.data.push({
+              id: article.id,
+              name: article.subtitle,
+              isActive: isActive
+            })
+          }
+        } else {
+          this.$emit('isArticleListEmpty', true)
+        }
+      })
+    },
+    clearArticleList () {
+      this.articleList.data = []
+      this.articleList.categoryId = ''
+    },
+    getArticleContent (article) {
+      article.isActive = true
+      this.$emit('ievent', article.id)
     }
   }
 }
@@ -77,8 +119,17 @@ export default {
   color: #666 !important;
   cursor:pointer;
 }
-.nav-dropdown-items .nav-item .nav-link{
-  padding-left: 2rem;
+.nav-dropdown-items .nav-item{
+  .nav-link{
+    padding-left: 2rem;
+  }
+  .nav-link-item{
+    font-size: 90%;
+    width: 196px;
+    overflow: hidden;
+    text-overflow:ellipsis;
+    white-space: nowrap;
+  }
 }
 .sidebar .nav-dropdown.open{
   border-left: 4px solid #2294e3;

@@ -2,7 +2,7 @@
   <div>
     <Header/>
     <div class="app-body">
-      <Sidebar :navItems="nav" @ievent="getArticleId" @nochild="notArticleId"/>
+      <Sidebar @ievent="getArticleContent" @isArticleListEmpty="articleListEmpty"/>
       <main class="main">
         <template v-if=" isShow ">
           <div class="container-fluid welcome">
@@ -21,27 +21,27 @@
         <template v-else>
           <div class="container-fluid">
             <div class="md-header">
-              <h5 class="title">{{mdForm.article.title}}</h5>
+              <h5 class="title">{{articleContent.article.title}}</h5>
               <div class="tip">
-                <div class="md-tag">作者: {{mdForm.article.author}}</div>
-                <div class="md-tag">日期: {{mdForm.article.updatedAt}}</div>
-                <div class="md-tag">浏览数: {{mdForm.article.pv}}次</div>
+                <div class="md-tag">作者: {{articleContent.article.author}}</div>
+                <div class="md-tag">日期: {{articleContent.article.updatedAt}}</div>
+                <div class="md-tag">浏览数: {{articleContent.article.pv}}次</div>
               </div>
               <div class="key-word">
                 关键词:
-                <div class="md-tag" v-for="(item, index) in mdForm.article.keywordTags" :key=index>
+                <div class="md-tag" v-for="(item, index) in articleContent.article.keywordTags" :key=index>
                   <i class="fa fa-tag"></i> <span>{{item.name}}</span>
                 </div>
               </div>
               <div class="key-word">
                 项目标签:
-                <div class="md-tag" v-for="(item, index) in mdForm.article.projectTags" :key=index>
+                <div class="md-tag" v-for="(item, index) in articleContent.article.projectTags" :key=index>
                   <i class="fa fa-tag"></i> <span>{{item.name}}</span>
                 </div>
               </div>
             </div>
             <div class="md-content">
-              <div v-html="mdForm.textHtml"></div>
+              <mavon-editor defaultOpen="preview" :toolbarsFlag="false" :subfield="false" :preview="true" v-model="articleContent.textHtml"/>
             </div>
             <div class="md-footer">
               <div class="refen" v-show="isRef">
@@ -53,7 +53,7 @@
               <div class="refen" v-show="isAtta">
                 <div class="text">附件:</div>
                 <div class="href">
-                  <a v-for="(item, index) in mdForm.article.attachments" :href="item.url" download="5555" :key="index">{{item.name}}</a>
+                  <a v-for="(item, index) in articleContent.article.attachments" :href="item.url" download="5555" :key="index">{{item.name}}</a>
                 </div>
               </div>
             </div>
@@ -66,7 +66,7 @@
 
 <script>
 import { Header, Sidebar } from './components/'
-import { getDetailCategories, getDetailSubTitle, getDetailArticleId } from '@/api/detail-api.js'
+import { getDetailArticleId } from '@/api/detail-api.js'
 export default {
   name: 'detail',
   components: {
@@ -75,52 +75,58 @@ export default {
   },
   data () {
     return {
-      mdForm: {
-        article: {
-          title: '',
-          author: ''
-        }
-      },
+      articleContent: {},
       reference: [],
       nav: [],
       noArticle: false,
       isShow: true,
       isRef: false,
-      isAtta: false
+      isAtta: false,
+      isOpenData: '',
+      articleId: ''
     }
   },
   created () {
-    this.initDetail()
+    if (localStorage.getItem('articleId')) {
+      this.initArticleContent()
+    }
   },
   methods: {
-    initDetail () {
-      getDetailCategories().then(res => {
-        let cateArr = new Map(res.data.data.content.map((item, i) => [i, item]))
-        for (let [key, item] of cateArr) {
-          this.nav.push({
-            id: item.id,
-            name: item.name,
-            isOpen: false,
-            child: []
-          })
-          getDetailSubTitle(item.id).then(res => {
-            for (let item of res.data.data) {
-              this.nav[key].child.push({
-                id: item.id,
-                name: item.subtitle,
-                isActive: false
-              })
-            }
-          })
-        }
-      })
-    },
-    getArticleId (...data) {
+    initArticleContent () {
       this.noArticle = false
       this.isShow = false
       this.reference = []
-      getDetailArticleId(data[0].id).then(res => {
-        this.mdForm = res.data.data
+      this.articleId = JSON.parse(localStorage.getItem('articleId'))
+      this.getArticleContent(this.articleId)
+    },
+    deepCopy (obj) {
+      var newObj = obj.constructor === Array ? [] : {}
+      newObj.constructor = obj.constructor
+      if (typeof obj !== 'object') {
+        return
+      } else if (window.JSON) {
+        newObj = JSON.parse(JSON.stringify(obj))
+      } else {
+        for (var prop in obj) {
+          if (obj[prop].constructor === RegExp || obj[prop].constructor === Date) {
+            newObj[prop] = obj[prop]
+          } else if (typeof obj[prop] === 'object') {
+            newObj[prop] = this.deepCopy(obj[prop])
+          } else {
+            newObj[prop] = obj[prop]
+          }
+        }
+      }
+      return newObj
+    },
+    getArticleContent (articleId) {
+      this.noArticle = false
+      this.isShow = false
+      this.reference = []
+      this.articleId = articleId
+      localStorage.setItem('articleId', JSON.stringify(this.articleId))
+      getDetailArticleId(this.articleId).then(res => {
+        this.articleContent = res.data.data
         if (res.data.data.article.attachments.length === 0) {
           this.isAtta = false
         } else {
@@ -145,8 +151,8 @@ export default {
         }
       })
     },
-    notArticleId (noid) {
-      this.noArticle = noid
+    articleListEmpty (value) {
+      this.noArticle = value
       this.isShow = false
     }
   }
@@ -156,5 +162,8 @@ export default {
 @import "./detail.scss";
 .welcome{
   margin-top: 1.5rem
+}
+.v-note-wrapper{
+    position: initial !important;
 }
 </style>

@@ -22,7 +22,7 @@
                 </el-option>
               </el-select>
             </el-form-item>
-            <el-form-item label="关键词" prop="keywordTags">
+            <el-form-item label="关键词" >
               <el-select v-model="articleForm.keywordTags" multiple default-first-option value-key="id" @change="keyWordChange" placeholder="请选择文章关键词">
                 <el-option v-for="item in keyWordsSelete" :key="item.id" :label="item.name" :value="item">
                 </el-option>
@@ -124,13 +124,10 @@ export default {
         ],
         subtitle: [
           { required: true, message: '文章短标题不能为空，请输入文章短标题', trigger: 'blur' },
-          { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
+          { min: 3, message: '建议长度在 3 到 10 个中文字符左右', trigger: 'change' }
         ],
         className: [
           { required: true, message: '请选择文章分类', trigger: 'change' }
-        ],
-        keywordTags: [
-          { required: true, message: '至少选择一个文章关键词', trigger: 'change' }
         ]
       }
     }

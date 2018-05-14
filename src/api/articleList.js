@@ -18,6 +18,16 @@ export function getAllArticleList (page, size) {
 }
 
 /**
+ * 根据分类项id获取文章列表
+ */
+export function getArticleListById (id, page, size) {
+  return request({
+    url: '/articles?categoryId=' + id + '&page=' + page + '&size=' + size,
+    method: 'GET'
+  })
+}
+
+/**
  * 新增新文章
  */
 export function addArticle (categoryId, data) {
